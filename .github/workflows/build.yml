@@ -2,73 +2,41 @@ name: Test on Multiple OS
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
   pull_request:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-14, windows-2022]   # pin runners for stability
-        node-version: [18, 20, 22]
-        attempt: [1]
+        os: [ubuntu-latest, macos-latest, windows-latest] # Operating systems to test
+        node-version: [18, 20, 22]                      # Node.js versions to test
+        attempt: [1]         # Repeat tests 10 times
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
 
-      # (If you build Wasm in this repo)
-      - name: Setup Rust (for wasm)
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - name: Install wasm-pack (fast)
-        uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: 'latest'  # or a known-good version
-      - name: Install Binaryen (wasm-opt)
-        run: npm i -g binaryen@117
-
-      # Optional: ensure wasm-opt flags if you can't commit Cargo.toml
-      - name: Ensure wasm-opt flags (bulk memory)
-        if: hashFiles('**/Cargo.toml') != ''
-        shell: bash
+      - name: Install dependencies
         run: |
-          tomls=$(git ls-files '**/Cargo.toml' | tr '\n' ' ')
-          for T in $tomls; do
-            if ! grep -q '\[package.metadata.wasm-pack.profile.release\]' "$T"; then
-              cat >> "$T" <<'EOF'
+          npm install
+          npm install --save-dev git+https://github.com/Negar-Hashemi/js-sanitizer.git
+          npm i -D @babel/register
+          
 
-            [package.metadata.wasm-pack.profile.release]
-            wasm-opt = ['-O', '--enable-bulk-memory']
-            EOF
-            fi
-          done
-
-      - name: Install JS deps
-        run: npm ci
-
-      # Build the browser/wasm artifact before tests (adjust path/command)
-      - name: Build browser bundle (if applicable)
-        run: |
-          if [ -d "browser" ]; then
-            cd browser
-            # Example: wasm-pack build or your project-specific build
-            wasm-pack build --release --target web
-            cd -
-          fi
-
-      - name: Test attempt ${{ matrix.attempt }} on ${{ matrix.os }} with Node ${{ matrix.node-version }}
+      - name: Testing on OS (${{ matrix.os }}) with Node.js (version ${{ matrix.node-version }}) attempt ${{ matrix.attempt }}
         run: |
           echo "Run attempt: ${{ matrix.attempt }}"
-          npm test
+          mocha
+    continue-on-error: false
