@@ -43,4 +43,4 @@ jobs:
         run: |
           echo "Run attempt: ${{ matrix.attempt }}"
           npx mocha
-    continue-on-error: false
+    
