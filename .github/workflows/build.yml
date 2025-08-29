@@ -33,6 +33,8 @@ jobs:
           npm install
           npm install --save-dev git+https://github.com/Negar-Hashemi/js-sanitizer.git
           npm i -D @babel/register
+          npm i -D @babel/core @babel/preset-env @babel/preset-typescript
+
 
       - name: Ensure Mocha present
         run: npm i -D mocha
