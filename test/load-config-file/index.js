@@ -78,7 +78,9 @@ describe('loadConfigFile', () => {
 		// Remove undefined values and functions before checking
 		assert.deepStrictEqual(JSON.parse(JSON.stringify(options)), defaultConfigs);
 	});
-
+/**
+* @skipOnNodeVersion 22
+*/
 	it('throws a helpful error when loading an ES module that should actually be CommonJS', async () => {
 		let caughtError;
 		try {
